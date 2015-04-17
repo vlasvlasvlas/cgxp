@@ -48,6 +48,7 @@ Ext.namespace("cgxp.plugins");
  *              loginURL: "${request.route_url('login')}",
  *              loginChangeURL: "${request.route_url('loginchange')}",
  *              logoutURL: "${request.route_url('logout')}",
+ *              loginForgetURL:: "${request.route_url('loginforget')}",
  *              permalinkId: "permalink",
  *              enablePasswordChange: true,
  *              forcePasswordChange: true,
@@ -92,6 +93,12 @@ cgxp.plugins.Login = Ext.extend(gxp.plugins.Tool, {
      */
     logoutURL: null,
 
+    /** api: config[loginForgetURL]
+     *  URL of the login forget service.
+     *  Also anable the forget passworf button.
+     */
+    loginForgetURL: null,
+
     /** api: config[username]
      *  Username of currently logged in user.
      */
@@ -122,6 +129,7 @@ cgxp.plugins.Login = Ext.extend(gxp.plugins.Tool, {
     loginWindow: null,
     actionButton: null,
     submitButton: null,
+    forgetButton: null,
 
     /** api: config[permalinkId]
      *  ``String``
@@ -238,6 +246,8 @@ cgxp.plugins.Login = Ext.extend(gxp.plugins.Tool, {
     pwdChangeKoTitle: "Password update has failed",
     pwdChangeForceTitle: "Change Password",
     pwdChangeForceText: "You must change your password.",
+    forgetText: "Password forgeted",
+    generateNewPasswordText: "Generate new Password",
 
     /** private: method[addActions]
      */
@@ -249,6 +259,14 @@ cgxp.plugins.Login = Ext.extend(gxp.plugins.Tool, {
             handler: this.submitForm,
             scope: this
         });
+        if (this.loginForgetURL && this.enablePasswordChange) {
+            this.forgetButton = new Ext.Button({
+                text: this.forgetText,
+                handler: this.toggleForget,
+                scope: this
+            });
+        }
+
         this.loginForm = this.createLoginForm();
         var items = [this.loginForm];
 
@@ -380,6 +398,15 @@ cgxp.plugins.Login = Ext.extend(gxp.plugins.Tool, {
         return cgxp.plugins.Login.superclass.addActions.apply(this, [this.toolbarItems]);
     },
 
+    toggleForget: function() {
+        this.submitButton.setText(this.generateNewPasswordText);
+        this.loginForm.findBy(function(element) {
+            return element.name == "password";
+        })[0].hide();
+        this.forgetButton.hide();
+        this.loginForm.getForm().url = this.loginForgetURL;
+    },
+
     toggleLoginWindow: function() {
         this.togglePasswordChangeFields(true);
         if (!this.loginWindow.hidden) {
@@ -503,6 +530,11 @@ cgxp.plugins.Login = Ext.extend(gxp.plugins.Tool, {
             formItems.push(this.loginFormBottomCellPanel);
         }
 
+        var buttons = [this.submitButton];
+        if (this.forgetButton) {
+            buttons.push(this.forgetButton);
+        }
+
         return new Ext.FormPanel({
             labelWidth: 100,
             width: 230,
@@ -521,7 +553,7 @@ cgxp.plugins.Login = Ext.extend(gxp.plugins.Tool, {
                 }
             },
             items: formItems,
-            buttons:[this.submitButton]
+            buttons: buttons
         });
     },
 
